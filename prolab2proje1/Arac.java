@@ -1,6 +1,4 @@
-// 2. Ulaşım Araçları (Arac) Sınıfı ve Alt Sınıfları
 
-// Soyut Araç sınıfı
 abstract class Arac {
     protected String plaka;
     protected Konum konum;
@@ -10,6 +8,5 @@ abstract class Arac {
         this.konum = konum;
     }
     
-    // Belirli mesafe için ücret hesaplama metodu
     public abstract double hesaplaUcret(double mesafe);
 }

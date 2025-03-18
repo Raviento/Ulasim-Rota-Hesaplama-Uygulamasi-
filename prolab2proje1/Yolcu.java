@@ -5,7 +5,6 @@ abstract class Yolcu {
         this.ad = ad;
     }
     
-    // Her yolcu için indirim oranı hesaplanır.
     public abstract double getIndirimOrani();
     
     public String getAd() {

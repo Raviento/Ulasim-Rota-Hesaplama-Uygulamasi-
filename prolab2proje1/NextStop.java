@@ -1,4 +1,4 @@
-// NextStop sınıfı: sonraki durağa ait mesafe, süre ve ücret bilgileri
+
 class NextStop {
     private String stopId;
     private double mesafe;

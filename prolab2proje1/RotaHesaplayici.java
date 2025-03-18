@@ -1,4 +1,3 @@
-// 5. Rota Hesaplayıcı Sınıfı
 
 import java.util.List;
 

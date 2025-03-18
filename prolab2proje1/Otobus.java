@@ -1,4 +1,4 @@
-// Otobüs sınıfı
+
 class Otobus extends Arac {
     public Otobus(String plaka, Konum konum) {
         super(plaka, konum);

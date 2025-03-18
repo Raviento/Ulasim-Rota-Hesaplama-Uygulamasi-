@@ -1,4 +1,4 @@
-// Transfer sınıfı: duraklar arası aktarma bilgilerini tutar
+
 class Transfer {
     private String transferStopId;
     private int transferSure;

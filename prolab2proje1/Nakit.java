@@ -1,4 +1,4 @@
-// Nakit ödeme
+
 class Nakit extends Odeme {
     @Override
     public void odemeYap(double tutar) {

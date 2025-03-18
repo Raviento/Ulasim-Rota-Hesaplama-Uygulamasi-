@@ -1,6 +1,4 @@
-// 4. Yardımcı Sınıflar
 
-// Konum sınıfı: enlem ve boylam bilgilerini tutar
 class Konum {
     private double enlem;
     private double boylam;

@@ -1,4 +1,4 @@
-// Tramvay sınıfı
+
 class Tramvay extends Arac {
     public Tramvay(String plaka, Konum konum) {
         super(plaka, konum);

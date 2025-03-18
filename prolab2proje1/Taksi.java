@@ -1,4 +1,4 @@
-// Taksi sınıfı (verilen açılış ücreti ve km başına ücret kullanılarak hesaplanır)
+
 class Taksi extends Arac {
     private double openingFee;
     private double costPerKm;

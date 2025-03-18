@@ -1,4 +1,4 @@
-// Kentkart ödeme
+
 class Kentkart extends Odeme {
     private double bakiye;
     

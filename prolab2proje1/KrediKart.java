@@ -1,4 +1,4 @@
-// Kredi Kartı ödeme
+
 class KrediKart extends Odeme {
     private String kartNumarasi;
     

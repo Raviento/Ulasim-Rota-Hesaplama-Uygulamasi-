@@ -1,7 +1,6 @@
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
-// Durak (Stop) sınıfı: durak bilgileri, komşu duraklar ve aktarma bilgilerini içerir
 class Durak {
     private String id;
     private String name;

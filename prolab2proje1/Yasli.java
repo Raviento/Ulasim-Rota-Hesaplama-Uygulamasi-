@@ -1,4 +1,4 @@
-// Yaşlı yolcu (örneğin, belirli bir seyahat sayısından sonra ücretsiz seyahat hakkı eklenebilir)
+
 class Yasli extends Yolcu {
     private int ucretsizSeyahatSayisi;
     
