@@ -9,6 +9,20 @@
             "name": "VeriSetiOkuyucu",
             "request": "launch",
             "mainClass": "VeriSetiOkuyucu",
+            "projectName": "prolab-proje-4_ca7f8b8c"
+        },
+        {
+            "type": "java",
+            "name": "KullaniciArayuzuSwing",
+            "request": "launch",
+            "mainClass": "KullaniciArayuzuSwing",
+            "projectName": "prolab-proje-4_ca7f8b8c"
+        },
+        {
+            "type": "java",
+            "name": "VeriSetiOkuyucu",
+            "request": "launch",
+            "mainClass": "VeriSetiOkuyucu",
             "projectName": "prolab-proje-4_ae9b8edf"
         },
         {
