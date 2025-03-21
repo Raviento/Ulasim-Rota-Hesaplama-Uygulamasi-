@@ -22,6 +22,19 @@ public class Main extends Application {
 
     private CityData cityData;
 
+    // Inner helper class: Edge bilgisi (undirected graph için)
+    private static class Edge {
+        String neighborId;
+        double sure;    // süre (dk)
+        double ucret;   // ücret (TL)
+
+        public Edge(String neighborId, double sure, double ucret) {
+            this.neighborId = neighborId;
+            this.sure = sure;
+            this.ucret = ucret;
+        }
+    }
+
     @Override
     public void start(Stage primaryStage) {
         // JSON verisetini yükle
@@ -29,7 +42,7 @@ public class Main extends Application {
 
         primaryStage.setTitle("Ulaşım Rota Planlama Sistemi");
 
-        // SplitPane kullanarak sol tarafta kullanıcı arayüzü, sağ tarafta grafik görünümü yer alsın
+        // SplitPane: Sol tarafta kullanıcı arayüzü, sağ tarafta grafik görünümü
         SplitPane splitPane = new SplitPane();
         splitPane.setDividerPositions(0.5);
 
@@ -43,7 +56,7 @@ public class Main extends Application {
         primaryStage.show();
     }
 
-    // Sol tarafta kullanıcı arayüzü ve rota hesaplama sonuçlarının gösterildiği pane
+    // Sol tarafta rota hesaplama arayüzü
     private Pane createRotaHesaplamaPane(Stage primaryStage) {
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(15));
@@ -122,30 +135,30 @@ public class Main extends Application {
                 System.out.println("Hedef için en yakın durak: " + endDurak.getName());
 
                 StringBuilder sb = new StringBuilder();
-                double baseFare = 0;
-                double startToDurakMesafe = baslangic.mesafeHesapla(startDurak.getKonum());
+                double totalFare = 0;
                 double taxiFareStart = 0;
+                double startToDurakMesafe = baslangic.mesafeHesapla(startDurak.getKonum());
                 if (startToDurakMesafe > 3) {
-                    sb.append("Kullanıcı konumundan en yakın durağa olan mesafe ")
+                    sb.append("Kullanıcı konumundan başlangıç durağına olan mesafe ")
                             .append(String.format("%.2f", startToDurakMesafe))
-                            .append(" km olduğundan, yolculuk başlangıcında taksi kullanılması gerekmektedir.\n");
+                            .append(" km olduğundan, başlangıçta taksi kullanılması gerekmektedir.\n");
                     Taksi taxi = cityData.getTaxi();
                     taxiFareStart = taxi.hesaplaUcret(startToDurakMesafe);
-                    sb.append("Taksi ile ulaşım ücreti: ").append(String.format("%.2f", taxiFareStart)).append(" TL\n\n");
-                    baseFare = taxiFareStart;
+                    sb.append("Başlangıç için taksi ücreti: ").append(String.format("%.2f", taxiFareStart)).append(" TL\n\n");
                 } else {
                     sb.append("Başlangıç konumundan en yakın durak (").append(startDurak.getName())
                             .append(") ").append(String.format("%.2f", startToDurakMesafe * 1000)).append(" m uzaklıkta → Yürüme = 0 TL\n\n");
-                    baseFare = 6;
                 }
+                totalFare += taxiFareStart;
 
-                List<Durak> route = calculateRoute(startDurak, endDurak, duraklar);
+                // Rota hesaplaması: Undirected graf üzerinden Dijkstra algoritması
+                List<Durak> route = calculateRouteUndirected(startDurak, endDurak, duraklar);
                 if (route == null || route.isEmpty()) {
                     sb.append("Uygun rota bulunamadı.\n");
                 } else {
                     sb.append("🚏 Rota Detayları:\n");
                     double totalSure = 0;
-                    double totalUcret = 0;
+                    double routeFare = 0;
                     for (int i = 0; i < route.size() - 1; i++) {
                         Durak current = route.get(i);
                         Durak next = route.get(i + 1);
@@ -153,7 +166,7 @@ public class Main extends Application {
                         double sure = edgeInfo.getKey();
                         double ucret = edgeInfo.getValue();
                         totalSure += sure;
-                        totalUcret += ucret;
+                        routeFare += ucret;
                         sb.append((i + 1)).append("⃣ ").append(current.getName())
                                 .append(" → ").append(next.getName());
                         if (current.getType().equalsIgnoreCase("bus")) {
@@ -164,13 +177,30 @@ public class Main extends Application {
                         sb.append("\n   ⏳ Süre: ").append(sure).append(" dk")
                                 .append("\n   💰 Ücret: ").append(ucret).append(" TL\n\n");
                     }
-                    sb.append("📊 Toplam:\n");
-                    sb.append("   Ücret: ").append(String.format("%.2f", totalUcret + taxiFareStart)).append(" TL\n");
-                    sb.append("   Süre: ").append(String.format("%.0f", totalSure)).append(" dk\n");
-                    sb.append("   Mesafe: ").append("5 km\n\n");
+                    sb.append("Rota üzerinden hesaplanan ücret: ").append(String.format("%.2f", routeFare)).append(" TL\n");
+                    sb.append("Rota üzerinden hesaplanan süre: ").append(String.format("%.0f", totalSure)).append(" dk\n");
+                    // Mesafe hesaplaması: Burada örnek sabit değer kullanılıyor, isteğe göre güncellenebilir
+                    sb.append("Rota üzerinden hesaplanan mesafe: ").append("5 km\n\n");
+                    totalFare += routeFare;
                 }
 
-                // Yolcu tipi ve indirim
+                // Hedef nokta için taksi kontrolü
+                double taxiFareEnd = 0;
+                double endToDurakMesafe = hedef.mesafeHesapla(endDurak.getKonum());
+                if (endToDurakMesafe > 3) {
+                    sb.append("Hedef noktasından en yakın durağa olan mesafe ")
+                            .append(String.format("%.2f", endToDurakMesafe))
+                            .append(" km olduğundan, hedefte taksi kullanılması gerekmektedir.\n");
+                    Taksi taxi = cityData.getTaxi();
+                    taxiFareEnd = taxi.hesaplaUcret(endToDurakMesafe);
+                    sb.append("Hedef için taksi ücreti: ").append(String.format("%.2f", taxiFareEnd)).append(" TL\n\n");
+                } else {
+                    sb.append("Hedef noktasından en yakın durak (").append(endDurak.getName())
+                            .append(") ").append(String.format("%.2f", endToDurakMesafe * 1000)).append(" m uzaklıkta → Yürüme = 0 TL\n\n");
+                }
+                totalFare += taxiFareEnd;
+
+                // Yolcu tipi ve indirim uygulanması
                 Yolcu yolcu;
                 switch (cbYolcuTipi.getValue()) {
                     case "Öğrenci":
@@ -184,7 +214,7 @@ public class Main extends Application {
                         break;
                 }
                 double indirimOrani = yolcu.getIndirimOrani();
-                double finalFare = (taxiFareStart + (route != null ? getTotalFare(route, duraklar) : 6)) * (1 - indirimOrani);
+                double finalFare = totalFare * (1 - indirimOrani);
                 sb.append("Yolcu tipi: ").append(cbYolcuTipi.getValue()).append("\n");
                 sb.append("Uygulanan indirim oranı: ").append(String.format("%.0f%%", indirimOrani * 100)).append("\n");
                 sb.append("İndirim sonrası toplam ücret: ").append(String.format("%.2f", finalFare)).append(" TL\n\n");
@@ -213,9 +243,7 @@ public class Main extends Application {
         return grid;
     }
 
-    // Sağ tarafta graf yapısını oluşturan pane: Duraklar ve bağlantılar çiziliyor.
-    // Durakların üzerine tıklandığında, kopyalanabilir detay içeren bir pencere (Stage) açılır.
-    // Ayrıca, fare scroll olayları ile zoom yapma imkanı sağlanır.
+    // Sağ tarafta grafik görünüm: Duraklar, bağlantılar, zoom ve durak üzerine tıklandığında kopyalanabilir detay penceresi
     private Pane createGraphPane(Stage primaryStage) {
         Pane graphPane = new Pane();
         graphPane.setPrefSize(600, 400);
@@ -226,7 +254,6 @@ public class Main extends Application {
         }
 
         List<Durak> duraklar = cityData.getDuraklar();
-        // Enlem ve boylam sınırlarını hesaplayalım
         double minLat = Double.MAX_VALUE, maxLat = -Double.MAX_VALUE;
         double minLon = Double.MAX_VALUE, maxLon = -Double.MAX_VALUE;
         for (Durak d : duraklar) {
@@ -254,7 +281,7 @@ public class Main extends Application {
             else
                 circle.setFill(Color.GRAY);
 
-            // Durak üzerine tıklandığında kopyalanabilir detay penceresi açılır
+            // Üzerine tıklandığında kopyalanabilir detay penceresi açılır
             circle.setOnMouseClicked((MouseEvent event) -> {
                 Stage detailStage = new Stage();
                 detailStage.initOwner(primaryStage);
@@ -264,19 +291,21 @@ public class Main extends Application {
                         "\nEnlem: " + k.getEnlem() +
                         "\nBoylam: " + k.getBoylam());
                 detailText.setWrapText(true);
-                // Kullanıcı kopyalama yapabilsin, düzenleme kapalı
-                detailText.setEditable(false);
+                detailText.setEditable(true);
                 VBox vbox = new VBox(detailText);
                 vbox.setPadding(new Insets(10));
                 Scene detailScene = new Scene(vbox, 250, 150);
                 detailStage.setScene(detailScene);
+                // Tıklama noktasının ekran koordinatlarına göre konumlandırma (tam üstünde açılması için)
+                detailStage.setX(event.getScreenX());
+                detailStage.setY(event.getScreenY() - 150);
                 detailStage.show();
             });
 
             graphPane.getChildren().add(circle);
             circleMap.put(d.getId(), circle);
         }
-        // Duraklar arası bağlantıları çizelim
+        // Duraklar arası bağlantılar: NextStop düz çizgi, Transfer kırmızı kesikli çizgi
         for (Durak d : duraklar) {
             Circle fromCircle = circleMap.get(d.getId());
             if (d.getNextStops() != null) {
@@ -301,7 +330,7 @@ public class Main extends Application {
                 }
             }
         }
-        // Zoom için scroll olaylarını ekleyelim
+        // Zoom: fare scroll olaylarıyla
         graphPane.setOnScroll((ScrollEvent event) -> {
             double zoomFactor = (event.getDeltaY() > 0) ? 1.1 : 0.9;
             graphPane.setScaleX(graphPane.getScaleX() * zoomFactor);
@@ -312,7 +341,104 @@ public class Main extends Application {
         return graphPane;
     }
 
-    // JSON veriseti yüklemesi: veriseti.json dosyasının src/main/resources altında olduğundan emin olun.
+    // Undirected graph üzerinden Dijkstra algoritması
+    private List<Durak> calculateRouteUndirected(Durak start, Durak end, List<Durak> duraklar) {
+        // Build undirected graph: her durak için listeler oluşturuyoruz
+        Map<String, List<Edge>> graph = new HashMap<>();
+        for (Durak d : duraklar) {
+            graph.put(d.getId(), new ArrayList<>());
+        }
+        // NextStop ve Transfer kenarlarını iki yönlü ekleyelim
+        for (Durak d : duraklar) {
+            if (d.getNextStops() != null) {
+                for (NextStop ns : d.getNextStops()) {
+                    graph.get(d.getId()).add(new Edge(ns.getStopId(), ns.getSure(), ns.getUcret()));
+                    // Reverse edge
+                    graph.get(ns.getStopId()).add(new Edge(d.getId(), ns.getSure(), ns.getUcret()));
+                }
+            }
+            if (d.getTransfer() != null) {
+                Transfer t = d.getTransfer();
+                graph.get(d.getId()).add(new Edge(t.getTransferStopId(), t.getTransferSure(), t.getTransferUcret()));
+                graph.get(t.getTransferStopId()).add(new Edge(d.getId(), t.getTransferSure(), t.getTransferUcret()));
+            }
+        }
+        // Dijkstra algoritması
+        Map<String, Double> dist = new HashMap<>();
+        Map<String, String> prev = new HashMap<>();
+        for (Durak d : duraklar) {
+            dist.put(d.getId(), Double.MAX_VALUE);
+        }
+        dist.put(start.getId(), 0.0);
+        PriorityQueue<Pair<String, Double>> queue = new PriorityQueue<>(Comparator.comparingDouble(Pair::getValue));
+        queue.add(new Pair<>(start.getId(), 0.0));
+        while (!queue.isEmpty()) {
+            Pair<String, Double> current = queue.poll();
+            String currentId = current.getKey();
+            if (currentId.equals(end.getId())) break;
+            for (Edge edge : graph.get(currentId)) {
+                double alt = dist.get(currentId) + edge.sure;
+                if (alt < dist.get(edge.neighborId)) {
+                    dist.put(edge.neighborId, alt);
+                    prev.put(edge.neighborId, currentId);
+                    queue.add(new Pair<>(edge.neighborId, alt));
+                }
+            }
+        }
+        List<Durak> route = new ArrayList<>();
+        String cur = end.getId();
+        if (!prev.containsKey(cur) && !cur.equals(start.getId())) return null;
+        while (cur != null) {
+            route.add(0, getDurakById(duraklar, cur));
+            cur = prev.get(cur);
+        }
+        return route;
+    }
+
+    // Helper: Get Durak by id
+    private Durak getDurakById(List<Durak> duraklar, String id) {
+        for (Durak d : duraklar) {
+            if (d.getId().equals(id)) return d;
+        }
+        return null;
+    }
+
+    // Directed edge bilgisini döndüren metot; reverse kontrolü de yapılıyor.
+    private Pair<Double, Double> getEdgeInfo(Durak from, Durak to) {
+        if (from.getNextStops() != null) {
+            for (NextStop ns : from.getNextStops()) {
+                if (ns.getStopId().equals(to.getId())) {
+                    return new Pair<>((double) ns.getSure(), ns.getUcret());
+                }
+            }
+        }
+        if (from.getTransfer() != null && from.getTransfer().getTransferStopId().equals(to.getId())) {
+            return new Pair<>((double) from.getTransfer().getTransferSure(), from.getTransfer().getTransferUcret());
+        }
+        // Reverse kontrol
+        if (to.getNextStops() != null) {
+            for (NextStop ns : to.getNextStops()) {
+                if (ns.getStopId().equals(from.getId())) {
+                    return new Pair<>((double) ns.getSure(), ns.getUcret());
+                }
+            }
+        }
+        if (to.getTransfer() != null && to.getTransfer().getTransferStopId().equals(from.getId())) {
+            return new Pair<>((double) to.getTransfer().getTransferSure(), to.getTransfer().getTransferUcret());
+        }
+        return new Pair<>(0.0, 0.0);
+    }
+
+    // Rota üzerindeki toplam ücretin hesaplanması
+    private double getTotalFare(List<Durak> route, List<Durak> duraklar) {
+        double total = 0;
+        for (int i = 0; i < route.size() - 1; i++) {
+            Pair<Double, Double> info = getEdgeInfo(route.get(i), route.get(i + 1));
+            total += info.getValue();
+        }
+        return total;
+    }
+
     private void loadCityData() {
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -339,84 +465,6 @@ public class Main extends Application {
             }
         }
         return nearest;
-    }
-
-    // Dijkstra algoritması ile rota hesaplaması: ağırlık olarak süre (sure) kullanılır.
-    private List<Durak> calculateRoute(Durak start, Durak end, List<Durak> duraklar) {
-        Map<String, Durak> durakMap = new HashMap<>();
-        for (Durak d : duraklar) {
-            durakMap.put(d.getId(), d);
-        }
-        Map<String, Double> dist = new HashMap<>();
-        Map<String, String> prev = new HashMap<>();
-        for (Durak d : duraklar) {
-            dist.put(d.getId(), Double.MAX_VALUE);
-        }
-        dist.put(start.getId(), 0.0);
-        PriorityQueue<Pair<String, Double>> queue = new PriorityQueue<>(Comparator.comparingDouble(Pair::getValue));
-        queue.add(new Pair<>(start.getId(), 0.0));
-        while (!queue.isEmpty()) {
-            Pair<String, Double> current = queue.poll();
-            String currentId = current.getKey();
-            if (currentId.equals(end.getId())) break;
-            Durak currentDurak = durakMap.get(currentId);
-            if (currentDurak.getNextStops() != null) {
-                for (NextStop ns : currentDurak.getNextStops()) {
-                    String neighborId = ns.getStopId();
-                    double alt = dist.get(currentId) + ns.getSure();
-                    if (alt < dist.getOrDefault(neighborId, Double.MAX_VALUE)) {
-                        dist.put(neighborId, alt);
-                        prev.put(neighborId, currentId);
-                        queue.add(new Pair<>(neighborId, alt));
-                    }
-                }
-            }
-            if (currentDurak.getTransfer() != null) {
-                Transfer t = currentDurak.getTransfer();
-                String neighborId = t.getTransferStopId();
-                double alt = dist.get(currentId) + t.getTransferSure();
-                if (alt < dist.getOrDefault(neighborId, Double.MAX_VALUE)) {
-                    dist.put(neighborId, alt);
-                    prev.put(neighborId, currentId);
-                    queue.add(new Pair<>(neighborId, alt));
-                }
-            }
-        }
-        List<Durak> route = new ArrayList<>();
-        String cur = end.getId();
-        if (!prev.containsKey(cur) && !cur.equals(start.getId())) {
-            return null;
-        }
-        while (cur != null) {
-            route.add(0, durakMap.get(cur));
-            cur = prev.get(cur);
-        }
-        return route;
-    }
-
-    // İki durak arasındaki edge bilgisini döndürür: key = süre, value = ücret
-    private Pair<Double, Double> getEdgeInfo(Durak from, Durak to) {
-        if (from.getNextStops() != null) {
-            for (NextStop ns : from.getNextStops()) {
-                if (ns.getStopId().equals(to.getId())) {
-                    return new Pair<>((double) ns.getSure(), ns.getUcret());
-                }
-            }
-        }
-        if (from.getTransfer() != null && from.getTransfer().getTransferStopId().equals(to.getId())) {
-            return new Pair<>((double) from.getTransfer().getTransferSure(), from.getTransfer().getTransferUcret());
-        }
-        return new Pair<>(0.0, 0.0);
-    }
-
-    // Rota üzerindeki toplam ücretin hesaplanması
-    private double getTotalFare(List<Durak> route, List<Durak> duraklar) {
-        double total = 0;
-        for (int i = 0; i < route.size() - 1; i++) {
-            Pair<Double, Double> info = getEdgeInfo(route.get(i), route.get(i + 1));
-            total += info.getValue();
-        }
-        return total;
     }
 
     public static void main(String[] args) {
