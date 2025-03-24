@@ -52,6 +52,7 @@ public class Main extends Application {
         splitPane.getItems().addAll(leftPane, rightPane);
 
         Scene scene = new Scene(splitPane, 1000, 600);
+        scene.getRoot().setStyle("-fx-background-color: #2b2b2b; -fx-text-fill: white;");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -62,39 +63,48 @@ public class Main extends Application {
         grid.setPadding(new Insets(15));
         grid.setHgap(10);
         grid.setVgap(10);
+        grid.setStyle("-fx-background-color: #2b2b2b; -fx-text-fill: white;");
 
         Label lblBaslangic = new Label("Başlangıç Enlem:");
+        lblBaslangic.setStyle("-fx-text-fill: white;");
         TextField tfBaslangicEnlem = new TextField();
         tfBaslangicEnlem.setPromptText("Örn: 40.78259");
 
         Label lblBaslangicBoylam = new Label("Başlangıç Boylam:");
+        lblBaslangicBoylam.setStyle("-fx-text-fill: white;");
         TextField tfBaslangicBoylam = new TextField();
         tfBaslangicBoylam.setPromptText("Örn: 29.94628");
 
         Label lblHedefEnlem = new Label("Hedef Enlem:");
+        lblHedefEnlem.setStyle("-fx-text-fill: white;");
         TextField tfHedefEnlem = new TextField();
         tfHedefEnlem.setPromptText("Örn: 40.76200");
 
         Label lblHedefBoylam = new Label("Hedef Boylam:");
+        lblHedefBoylam.setStyle("-fx-text-fill: white;");
         TextField tfHedefBoylam = new TextField();
         tfHedefBoylam.setPromptText("Örn: 29.96550");
 
         Label lblYolcuTipi = new Label("Yolcu Tipi:");
+        lblYolcuTipi.setStyle("-fx-text-fill: white;");
         ComboBox<String> cbYolcuTipi = new ComboBox<>();
         cbYolcuTipi.getItems().addAll("Genel", "Öğrenci", "Yaşlı");
         cbYolcuTipi.setValue("Genel");
 
         Label lblOdemeYontemi = new Label("Ödeme Yöntemi:");
+        lblOdemeYontemi.setStyle("-fx-text-fill: white;");
         ComboBox<String> cbOdemeYontemi = new ComboBox<>();
         cbOdemeYontemi.getItems().addAll("Nakit", "Kredi Kartı", "KentKart");
         cbOdemeYontemi.setValue("Nakit");
 
         Button btnHesapla = new Button("Rota Hesapla");
+        btnHesapla.setStyle("-fx-background-color: #555555; -fx-text-fill: white;");
 
         TextArea taSonuc = new TextArea();
         taSonuc.setEditable(false);
         taSonuc.setWrapText(true);
         taSonuc.setPrefHeight(300);
+        taSonuc.setStyle("-fx-control-inner-background: #3c3f41; -fx-text-fill: white;");
 
         grid.add(lblBaslangic, 0, 0);
         grid.add(tfBaslangicEnlem, 1, 0);
@@ -147,11 +157,12 @@ public class Main extends Application {
                     sb.append("Başlangıç için taksi ücreti: ").append(String.format("%.2f", taxiFareStart)).append(" TL\n\n");
                 } else {
                     sb.append("Başlangıç konumundan en yakın durak (").append(startDurak.getName())
-                            .append(") ").append(String.format("%.2f", startToDurakMesafe * 1000)).append(" m uzaklıkta → Yürüme = 0 TL\n\n");
+                            .append(") ").append(String.format("%.2f", startToDurakMesafe * 1000))
+                            .append(" m uzaklıkta → Yürüme = 0 TL\n\n");
                 }
                 totalFare += taxiFareStart;
 
-                // Rota hesaplaması: Undirected graf üzerinden Dijkstra algoritması
+                // Rota hesaplaması: Undirected graf üzerinden Dijkstra algoritması kullanılarak
                 List<Durak> route = calculateRouteUndirected(startDurak, endDurak, duraklar);
                 if (route == null || route.isEmpty()) {
                     sb.append("Uygun rota bulunamadı.\n");
@@ -179,7 +190,6 @@ public class Main extends Application {
                     }
                     sb.append("Rota üzerinden hesaplanan ücret: ").append(String.format("%.2f", routeFare)).append(" TL\n");
                     sb.append("Rota üzerinden hesaplanan süre: ").append(String.format("%.0f", totalSure)).append(" dk\n");
-                    // Mesafe hesaplaması: Burada örnek sabit değer kullanılıyor, isteğe göre güncellenebilir
                     sb.append("Rota üzerinden hesaplanan mesafe: ").append("5 km\n\n");
                     totalFare += routeFare;
                 }
@@ -196,7 +206,8 @@ public class Main extends Application {
                     sb.append("Hedef için taksi ücreti: ").append(String.format("%.2f", taxiFareEnd)).append(" TL\n\n");
                 } else {
                     sb.append("Hedef noktasından en yakın durak (").append(endDurak.getName())
-                            .append(") ").append(String.format("%.2f", endToDurakMesafe * 1000)).append(" m uzaklıkta → Yürüme = 0 TL\n\n");
+                            .append(") ").append(String.format("%.2f", endToDurakMesafe * 1000))
+                            .append(" m uzaklıkta → Yürüme = 0 TL\n\n");
                 }
                 totalFare += taxiFareEnd;
 
@@ -215,18 +226,27 @@ public class Main extends Application {
                 }
                 double indirimOrani = yolcu.getIndirimOrani();
                 double finalFare = totalFare * (1 - indirimOrani);
+
                 sb.append("Yolcu tipi: ").append(cbYolcuTipi.getValue()).append("\n");
                 sb.append("Uygulanan indirim oranı: ").append(String.format("%.0f%%", indirimOrani * 100)).append("\n");
-                sb.append("İndirim sonrası toplam ücret: ").append(String.format("%.2f", finalFare)).append(" TL\n\n");
 
+                // Eğer ödeme yöntemi Kredi Kartı ise, zamlı fiyatı hesaplayıp görüntüleyelim
                 String odemeYontemi = cbOdemeYontemi.getValue();
+                double displayFare = finalFare;
+                if (odemeYontemi.equals("Kredi Kartı")) {
+                    displayFare = finalFare * 1.2; // %20 zam uygulanmış hali
+                }
+                sb.append("İndirim sonrası toplam ücret: ").append(String.format("%.2f", displayFare)).append(" TL\n\n");
+
+                // Ödeme işlemi simülasyonu
                 Odeme odeme;
                 if (odemeYontemi.equals("Nakit")) {
                     odeme = new Nakit();
                 } else if (odemeYontemi.equals("Kredi Kartı")) {
                     odeme = new KrediKart("1234-5678-9012-3456");
                 } else if (odemeYontemi.equals("KentKart")) {
-                    odeme = new KentKart(100);
+                    // KentKart için başlangıç bakiyesi 10 TL olarak ayarlandı.
+                    odeme = new KentKart(10);
                 } else {
                     odeme = new Nakit();
                 }
@@ -247,8 +267,11 @@ public class Main extends Application {
     private Pane createGraphPane(Stage primaryStage) {
         Pane graphPane = new Pane();
         graphPane.setPrefSize(600, 400);
+        graphPane.setStyle("-fx-background-color: #2b2b2b;");
+
         if (cityData == null || cityData.getDuraklar() == null || cityData.getDuraklar().isEmpty()) {
             Label lbl = new Label("Veri seti yüklenemedi veya durak bilgisi boş.");
+            lbl.setStyle("-fx-text-fill: white;");
             graphPane.getChildren().add(lbl);
             return graphPane;
         }
@@ -281,7 +304,7 @@ public class Main extends Application {
             else
                 circle.setFill(Color.GRAY);
 
-            // Üzerine tıklandığında kopyalanabilir detay penceresi açılır
+            // Üzerine tıklandığında kopyalanabilir detay penceresi açılır.
             circle.setOnMouseClicked((MouseEvent event) -> {
                 Stage detailStage = new Stage();
                 detailStage.initOwner(primaryStage);
@@ -296,7 +319,6 @@ public class Main extends Application {
                 vbox.setPadding(new Insets(10));
                 Scene detailScene = new Scene(vbox, 250, 150);
                 detailStage.setScene(detailScene);
-                // Tıklama noktasının ekran koordinatlarına göre konumlandırma (tam üstünde açılması için)
                 detailStage.setX(event.getScreenX());
                 detailStage.setY(event.getScreenY() - 150);
                 detailStage.show();
@@ -305,7 +327,7 @@ public class Main extends Application {
             graphPane.getChildren().add(circle);
             circleMap.put(d.getId(), circle);
         }
-        // Duraklar arası bağlantılar: NextStop düz çizgi, Transfer kırmızı kesikli çizgi
+        // Duraklar arası bağlantılar: NextStop için düz çizgi, Transfer için kırmızı kesikli çizgi
         for (Durak d : duraklar) {
             Circle fromCircle = circleMap.get(d.getId());
             if (d.getNextStops() != null) {
@@ -314,7 +336,7 @@ public class Main extends Application {
                     if (toCircle != null) {
                         Line line = new Line(fromCircle.getCenterX(), fromCircle.getCenterY(),
                                 toCircle.getCenterX(), toCircle.getCenterY());
-                        line.setStroke(Color.BLACK);
+                        line.setStroke(Color.WHITE);
                         graphPane.getChildren().add(line);
                     }
                 }
@@ -343,12 +365,12 @@ public class Main extends Application {
 
     // Undirected graph üzerinden Dijkstra algoritması
     private List<Durak> calculateRouteUndirected(Durak start, Durak end, List<Durak> duraklar) {
-        // Build undirected graph: her durak için listeler oluşturuyoruz
+        // Undirected graph oluşturuluyor
         Map<String, List<Edge>> graph = new HashMap<>();
         for (Durak d : duraklar) {
             graph.put(d.getId(), new ArrayList<>());
         }
-        // NextStop ve Transfer kenarlarını iki yönlü ekleyelim
+        // NextStop ve Transfer edge’leri iki yönlü ekleniyor
         for (Durak d : duraklar) {
             if (d.getNextStops() != null) {
                 for (NextStop ns : d.getNextStops()) {
