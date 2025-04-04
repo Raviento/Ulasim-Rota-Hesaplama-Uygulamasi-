@@ -1,20 +1,31 @@
 package com.example.prolab4;
 
-import com.fasterxml.jackson.databind.ObjectMapper; import javafx.application.Application; import javafx.geometry.Insets; import javafx.scene.Scene; import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent; import javafx.scene.input.ScrollEvent; import javafx.scene.layout.*;
-import javafx.scene.paint.Color; import javafx.scene.shape.Circle; import javafx.scene.shape.Line; import javafx.stage.Modality; import javafx.stage.Stage; import javafx.util.Pair;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import java.io.InputStream; import java.util.*;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.util.Pair;
+
+import java.io.InputStream;
+import java.util.*;
 
 public class Main extends Application {
 
     private CityData cityData;
 
-    // Inner helper class: Edge bilgisi (undirected graph için)
     private static class Edge {
         String neighborId;
-        double sure;    // süre (dk)
-        double ucret;   // ücret (TL)
+        double sure;
+        double ucret;
 
         public Edge(String neighborId, double sure, double ucret) {
             this.neighborId = neighborId;
@@ -26,9 +37,8 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         loadCityData();
-        primaryStage.setTitle("Ulaşım Rota Planlama Sistemi");
+        primaryStage.setTitle("Ulasim Rota Planlama Sistemi");
 
-        // SplitPane: sol panel = kullanıcı arayüzü, sağ panel = grafik görünüm
         SplitPane splitPane = new SplitPane();
         splitPane.setDividerPositions(0.5);
         Pane leftPane = createRotaHesaplamaPane(primaryStage);
@@ -41,7 +51,6 @@ public class Main extends Application {
         primaryStage.show();
     }
 
-    // Kullanıcı arayüzü ve rota hesaplama sonuçlarının gösterildiği sol panel
     private Pane createRotaHesaplamaPane(Stage primaryStage) {
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(15));
@@ -49,33 +58,33 @@ public class Main extends Application {
         grid.setVgap(10);
         grid.setStyle("-fx-background-color: #2b2b2b; -fx-text-fill: white;");
 
-        Label lblBaslangic = new Label("Başlangıç Enlem:");
+        Label lblBaslangic = new Label("Baslangic Enlem:");
         lblBaslangic.setStyle("-fx-text-fill: white;");
         TextField tfBaslangicEnlem = new TextField();
-        tfBaslangicEnlem.setPromptText("Örn: 40.78259");
+        tfBaslangicEnlem.setPromptText("Orn: 40.78259");
 
-        Label lblBaslangicBoylam = new Label("Başlangıç Boylam:");
+        Label lblBaslangicBoylam = new Label("Baslangic Boylam:");
         lblBaslangicBoylam.setStyle("-fx-text-fill: white;");
         TextField tfBaslangicBoylam = new TextField();
-        tfBaslangicBoylam.setPromptText("Örn: 29.94628");
+        tfBaslangicBoylam.setPromptText("Orn: 29.94628");
 
         Label lblHedefEnlem = new Label("Hedef Enlem:");
         lblHedefEnlem.setStyle("-fx-text-fill: white;");
         TextField tfHedefEnlem = new TextField();
-        tfHedefEnlem.setPromptText("Örn: 40.76200");
+        tfHedefEnlem.setPromptText("Orn: 40.76200");
 
         Label lblHedefBoylam = new Label("Hedef Boylam:");
         lblHedefBoylam.setStyle("-fx-text-fill: white;");
         TextField tfHedefBoylam = new TextField();
-        tfHedefBoylam.setPromptText("Örn: 29.96550");
+        tfHedefBoylam.setPromptText("Orn: 29.96550");
 
         Label lblYolcuTipi = new Label("Yolcu Tipi:");
         lblYolcuTipi.setStyle("-fx-text-fill: white;");
         ComboBox<String> cbYolcuTipi = new ComboBox<>();
-        cbYolcuTipi.getItems().addAll("Genel", "Öğrenci", "Yaşlı");
+        cbYolcuTipi.getItems().addAll("Genel", "Ogrenci", "Yasli");
         cbYolcuTipi.setValue("Genel");
 
-        Label lblOdemeYontemi = new Label("Ödeme Yöntemi:");
+        Label lblOdemeYontemi = new Label("Odeme Yontemi:");
         lblOdemeYontemi.setStyle("-fx-text-fill: white;");
         ComboBox<String> cbOdemeYontemi = new ComboBox<>();
         cbOdemeYontemi.getItems().addAll("Nakit", "Kredi Kartı", "KentKart");
@@ -122,29 +131,27 @@ public class Main extends Application {
                 StringBuilder sb = new StringBuilder();
 
                 double totalFare = 0;
-                // Başlangıç için: Eğer 3 km'den fazla ise taksi, aksi halde yürüyüş
                 double startToDurakMesafe = baslangic.mesafeHesapla(startDurak.getKonum());
                 if (startToDurakMesafe > 3) {
-                    sb.append("Başlangıç noktasından en yakın durağa olan mesafe ")
+                    sb.append("Baslangic noktasindan en yakin duraga olan mesafe ")
                             .append(String.format("%.2f", startToDurakMesafe))
-                            .append(" km olduğundan, başlangıçta taksi kullanılması gerekmektedir.\n");
+                            .append(" km oldugundan, baslangicta taksi kullanilmasi gerekmektedir.\n");
                     Taksi taxi = cityData.getTaxi();
                     double taxiFareStart = taxi.hesaplaUcret(startToDurakMesafe);
-                    sb.append("Başlangıç için taksi ücreti: ").append(String.format("%.2f", taxiFareStart)).append(" TL\n\n");
+                    sb.append("Baslangic icin taksi ucreti: ").append(String.format("%.2f", taxiFareStart)).append(" TL\n\n");
                     totalFare += taxiFareStart;
                 } else {
-                    sb.append("Başlangıç noktasından en yakın durak (")
+                    sb.append("Baslangic noktasindan en yakin durak (")
                             .append(startDurak.getName()).append(") ")
                             .append(String.format("%.2f", startToDurakMesafe * 1000))
-                            .append(" m uzaklıkta → Yürüme = 0 TL\n\n");
+                            .append(" m uzaklikta → Yuru = 0 TL\n\n");
                 }
 
-                // Ana rota hesaplaması (undirected Dijkstra)
                 List<Durak> route = calculateRouteUndirected(startDurak, endDurak, duraklar);
                 if (route == null || route.isEmpty()) {
-                    sb.append("Uygun ana rota bulunamadı.\n");
+                    sb.append("Uygun ana rota bulunamadi.\n");
                 } else {
-                    sb.append("🚏 Ana Rota:\n");
+                    sb.append("Ana Rota:\n");
                     double totalSure = 0;
                     double routeFare = 0;
                     for (int i = 0; i < route.size() - 1; i++) {
@@ -153,64 +160,61 @@ public class Main extends Application {
                         Pair<Double, Double> edgeInfo = getEdgeInfo(current, next);
                         totalSure += edgeInfo.getKey();
                         routeFare += edgeInfo.getValue();
-                        sb.append((i + 1)).append("⃣ ").append(current.getName())
+                        sb.append((i + 1)).append(" ").append(current.getName())
                                 .append(" → ").append(next.getName());
                         if (current.getType().equalsIgnoreCase("bus"))
-                            sb.append(" (🚌 Otobüs)");
+                            sb.append(" (Otobus)");
                         else if (current.getType().equalsIgnoreCase("tram"))
-                            sb.append(" (🚋 Tramvay)");
-                        sb.append("\n   ⏳ Süre: ").append(edgeInfo.getKey()).append(" dk")
-                                .append("\n   💰 Ücret: ").append(edgeInfo.getValue()).append(" TL\n\n");
+                            sb.append(" (Tramvay)");
+                        sb.append("\n   Sure: ").append(edgeInfo.getKey()).append(" dk")
+                                .append("\n   Ucret: ").append(edgeInfo.getValue()).append(" TL\n\n");
                     }
-                    sb.append("Ana rota üzerinden hesaplanan ücret: ").append(String.format("%.2f", routeFare)).append(" TL\n");
-                    sb.append("Ana rota üzerinden hesaplanan süre: ").append(String.format("%.0f", totalSure)).append(" dk\n\n");
+                    sb.append("Ana rota uzerinden hesaplanan ucret: ").append(String.format("%.2f", routeFare)).append(" TL\n");
+                    sb.append("Ana rota uzerinden hesaplanan sure: ").append(String.format("%.0f", totalSure)).append(" dk\n\n");
                     totalFare += routeFare;
                 }
 
-                // Hedef için: Eğer 3 km'den fazla ise taksi, aksi halde yürüyüş
                 double endToDurakMesafe = hedef.mesafeHesapla(endDurak.getKonum());
                 if (endToDurakMesafe > 3) {
-                    sb.append("Hedef noktasından en yakın durağa olan mesafe ")
+                    sb.append("Hedef noktasindan en yakin duraga olan mesafe ")
                             .append(String.format("%.2f", endToDurakMesafe))
-                            .append(" km olduğundan, hedefte taksi kullanılması gerekmektedir.\n");
+                            .append(" km oldugundan, hedefte taksi kullanilmasi gerekmektedir.\n");
                     Taksi taxi = cityData.getTaxi();
                     double taxiFareEnd = taxi.hesaplaUcret(endToDurakMesafe);
-                    sb.append("Hedef için taksi ücreti: ").append(String.format("%.2f", taxiFareEnd)).append(" TL\n\n");
+                    sb.append("Hedef icin taksi ucreti: ").append(String.format("%.2f", taxiFareEnd)).append(" TL\n\n");
                     totalFare += taxiFareEnd;
                 } else {
-                    sb.append("Hedef noktasından en yakın durak (")
+                    sb.append("Hedef noktasindan en yakin durak (")
                             .append(endDurak.getName()).append(") ")
                             .append(String.format("%.2f", endToDurakMesafe * 1000))
-                            .append(" m uzaklıkta → Yürüme = 0 TL\n\n");
+                            .append(" m uzaklikta → Yuru = 0 TL\n\n");
                 }
 
-                // Yolcu tipi ve indirim uygulanması
                 Yolcu yolcu;
                 switch (cbYolcuTipi.getValue()) {
-                    case "Öğrenci":
-                        yolcu = new Ogrenci("Test");
+                    case "Ogrenci":
+                        yolcu = new Ogrenci("");
                         break;
-                    case "Yaşlı":
-                        yolcu = new Yasli("Test");
+                    case "Yasli":
+                        yolcu = new Yasli("");
                         break;
                     default:
-                        yolcu = new Genel("Test");
+                        yolcu = new Genel("");
                         break;
                 }
                 double indirimOrani = yolcu.getIndirimOrani();
                 double fareAfterDiscount = totalFare * (1 - indirimOrani);
 
-                // Kredi Kartı seçildiyse %20 zam uygulanmış fiyat
                 String odemeYontemi = cbOdemeYontemi.getValue();
                 double displayFare = fareAfterDiscount;
-                if (odemeYontemi.equals("Kredi Kartı")) {
+                boolean krediKartMi = odemeYontemi.equals("Kredi Kartı");
+                if (krediKartMi) {
                     displayFare = fareAfterDiscount * 1.2;
                 }
                 sb.append("Yolcu tipi: ").append(cbYolcuTipi.getValue()).append("\n");
-                sb.append("Uygulanan indirim oranı: ").append(String.format("%.0f%%", indirimOrani * 100)).append("\n");
-                sb.append("İndirim sonrası toplam ücret: ").append(String.format("%.2f", displayFare)).append(" TL\n\n");
+                sb.append("Uygulanan indirim orani: ").append(String.format("%.0f%%", indirimOrani * 100)).append("\n");
+                sb.append("Indirim sonrasi toplam ucret: ").append(String.format("%.2f", displayFare)).append(" TL\n\n");
 
-                // Ödeme işlemi simülasyonu
                 Odeme odeme;
                 if (odemeYontemi.equals("Nakit")) {
                     odeme = new Nakit();
@@ -222,17 +226,12 @@ public class Main extends Application {
                     odeme = new Nakit();
                 }
                 odeme.odemeYap(fareAfterDiscount);
-                sb.append("Ödeme yöntemi: ").append(odemeYontemi).append("\n\n");
+                sb.append("Odeme yontemi: ").append(odemeYontemi).append("\n\n");
 
-                // Alternatif rotalar
-                sb.append("🛤 Alternatif Rotalar:\n");
-                // 1. Sadece Taksi
-                sb.append(computeDirectTaxiRoute(baslangic, hedef));
-                // 2. Sadece Otobüs (otobüs + otobüs)
-                sb.append(computeBusOnlyRoute(startDurak, endDurak, duraklar));
-                // 3. Otobüs + Tramvay (yeni alternatif)
-                sb.append(computeBusAndTramRoute(startDurak, endDurak, duraklar));
-                // 4. En Az Aktarmalı Rota
+                sb.append("Alternatif Rotalar:\n");
+                sb.append(computeDirectTaxiRoute(baslangic, hedef, krediKartMi));
+                sb.append(computeBusOnlyRoute(startDurak, endDurak, duraklar, krediKartMi));
+                sb.append(computeBusAndTramRoute(startDurak, endDurak, duraklar, krediKartMi));
                 sb.append(computeMinHopsRoute(startDurak, endDurak, duraklar));
 
                 taSonuc.setText(sb.toString());
@@ -245,7 +244,6 @@ public class Main extends Application {
         return grid;
     }
 
-    // Grafik görünüm paneli
     private Pane createGraphPane(Stage primaryStage) {
         Pane graphPane = new Pane();
         graphPane.setPrefSize(600, 400);
@@ -253,7 +251,7 @@ public class Main extends Application {
 
         List<Durak> duraklar = cityData.getDuraklar();
         if (duraklar == null || duraklar.isEmpty()) {
-            Label lbl = new Label("Veri seti yüklenemedi veya durak bilgisi boş.");
+            Label lbl = new Label("Veri seti yuklenemedi veya durak bilgisi bos.");
             lbl.setStyle("-fx-text-fill: white;");
             graphPane.getChildren().add(lbl);
             return graphPane;
@@ -288,7 +286,7 @@ public class Main extends Application {
                 Stage detailStage = new Stage();
                 detailStage.initOwner(primaryStage);
                 detailStage.initModality(Modality.APPLICATION_MODAL);
-                detailStage.setTitle("Durak Detayları - " + d.getName());
+                detailStage.setTitle("Durak Detaylari - " + d.getName());
                 TextArea detailText = new TextArea("Durak: " + d.getName() +
                         "\nEnlem: " + k.getEnlem() +
                         "\nBoylam: " + k.getBoylam());
@@ -305,7 +303,6 @@ public class Main extends Application {
             graphPane.getChildren().add(circle);
             circleMap.put(d.getId(), circle);
         }
-        // Duraklar arası bağlantılar
         for (Durak d : duraklar) {
             Circle fromCircle = circleMap.get(d.getId());
             if (d.getNextStops() != null) {
@@ -332,10 +329,7 @@ public class Main extends Application {
         }
         graphPane.setOnScroll(event -> {
             double zoomFactor = (event.getDeltaY() > 0) ? 1.1 : 0.9;
-
-            // Farenin sahnedeki konumunu alıyoruz
             Point2D mouseSceneCoords = new Point2D(event.getSceneX(), event.getSceneY());
-            // Zoomdan önce, farenin graphPane içindeki koordinatlarını hesaplıyoruz
             Point2D mouseLocalBefore = graphPane.sceneToLocal(mouseSceneCoords);
 
             double oldScale = graphPane.getScaleX();
@@ -343,41 +337,30 @@ public class Main extends Application {
             graphPane.setScaleX(newScale);
             graphPane.setScaleY(newScale);
 
-            // Zoom sonrası farenin graphPane içindeki yeni koordinatlarını hesaplıyoruz
             Point2D mouseLocalAfter = graphPane.sceneToLocal(mouseSceneCoords);
-            // İki konum arasındaki farkı buluyoruz
             Point2D delta = mouseLocalAfter.subtract(mouseLocalBefore);
 
-            // Bu fark kadar translate değerlerini güncelliyoruz, böylece farenin konumu sabit kalır
             graphPane.setTranslateX(graphPane.getTranslateX() - delta.getX());
             graphPane.setTranslateY(graphPane.getTranslateY() - delta.getY());
 
             event.consume();
         });
         graphPane.setOnMousePressed(event -> {
-            graphPane.setUserData(
-                    new double[]{event.getSceneX(),
-                    event.getSceneY(),
-                    graphPane.getTranslateX(),
-                    graphPane.getTranslateY()
-                    });
+            graphPane.setUserData(new double[]{event.getSceneX(), event.getSceneY(),
+                    graphPane.getTranslateX(), graphPane.getTranslateY()});
         });
-
         graphPane.setOnMouseDragged(event -> {
             double[] data = (double[]) graphPane.getUserData();
             double deltaX = event.getSceneX() - data[0];
             double deltaY = event.getSceneY() - data[1];
             graphPane.setTranslateX(data[2] + deltaX);
-            graphPane.setTranslateY(data[3] + deltaY); });
+            graphPane.setTranslateY(data[3] + deltaY);
+        });
 
         return graphPane;
     }
 
-    // Yeni alternatif: Otobüs + Tramvay rotası hesaplama
-    private String computeBusAndTramRoute(Durak start, Durak end, List<Durak> duraklar) {
-        // Otobüsle başlayıp, aktarma ile tramvaya geçilebilecek bir durak arıyoruz.
-        // Örneğin; eğer bir otobüs durağında transfer bilgisi varsa ve transfer edilen durak tramvay tipindeyse,
-        // o rota uygun kabul edilebilir.
+    private String computeBusAndTramRoute(Durak start, Durak end, List<Durak> duraklar, boolean isKrediKart) {
         Durak busToTramStop = null;
         for (Durak d : duraklar) {
             if (d.getType().equalsIgnoreCase("bus") && d.getTransfer() != null) {
@@ -389,34 +372,35 @@ public class Main extends Application {
             }
         }
         if (busToTramStop == null) {
-            return "🔹 Otobüs + Tramvay: Uygun alternatif rota bulunamadı.\n";
+            return "🔹 Otobus + Tramvay: Uygun alternatif rota bulunamadi.\n";
         }
-        // Hesaplama: start -> busToTramStop (otobüs rotası) ve transfer sonrası tramvay rotası: transferDurak -> end
         List<Durak> busRoute = calculateRouteUndirected(start, busToTramStop, duraklar);
         Durak transferDurak = getDurakById(duraklar, busToTramStop.getTransfer().getTransferStopId());
         List<Durak> tramRoute = calculateRouteUndirected(transferDurak, end, duraklar);
         if (busRoute == null || tramRoute == null || busRoute.isEmpty() || tramRoute.isEmpty()) {
-            return "🔹 Otobüs + Tramvay: Uygun alternatif rota bulunamadı.\n";
+            return "🔹 Otobus + Tramvay: Uygun alternatif rota bulunamadi.\n";
         }
         double totalSure = 0;
         double totalFare = 0;
-        StringBuilder sb = new StringBuilder("🔹 Otobüs + Tramvay:\n");
-        // Otobüs rotası bilgileri
+        StringBuilder sb = new StringBuilder("🔹 Otobus + Tramvay:\n");
         for (int i = 0; i < busRoute.size() - 1; i++) {
             Durak current = busRoute.get(i);
             Durak next = busRoute.get(i + 1);
             Pair<Double, Double> info = getEdgeInfo(current, next);
             totalSure += info.getKey();
             totalFare += info.getValue();
-            sb.append("   ").append(current.getName()).append(" -> ").append(next.getName()).append(" (Otobüs)\n");
+            sb.append("   ").append(current.getName()).append(" -> ").append(next.getName()).append(" (Otobus)\n");
         }
-        // Transfer bilgisi ekleniyor
-        Pair<Double, Double> transferInfo = new Pair<>((double)busToTramStop.getTransfer().getTransferSure(), busToTramStop.getTransfer().getTransferUcret());
-        totalSure += transferInfo.getKey();
-        totalFare += transferInfo.getValue();
+        double discountRate = 0.5;
+        double originalTransferFare = busToTramStop.getTransfer().getTransferUcret();
+        double discountedTransferFare = originalTransferFare * (1 - discountRate);
+        double transferSure = busToTramStop.getTransfer().getTransferSure();
+        totalSure += transferSure;
+        totalFare += discountedTransferFare;
         sb.append("   ").append(busToTramStop.getName()).append(" → Transfer (")
-                .append(transferInfo.getKey()).append(" dk, ").append(transferInfo.getValue()).append(" TL)\n");
-        // Tramvay rotası bilgileri
+                .append(transferSure).append(" dk, Orijinal Ucret: ")
+                .append(String.format("%.2f", originalTransferFare)).append(" TL, Indirimli Ucret: ")
+                .append(String.format("%.2f", discountedTransferFare)).append(" TL)\n");
         for (int i = 0; i < tramRoute.size() - 1; i++) {
             Durak current = tramRoute.get(i);
             Durak next = tramRoute.get(i + 1);
@@ -425,12 +409,14 @@ public class Main extends Application {
             totalFare += info.getValue();
             sb.append("   ").append(current.getName()).append(" -> ").append(next.getName()).append(" (Tramvay)\n");
         }
-        sb.append("   Toplam Süre: ").append(String.format("%.0f", totalSure)).append(" dk, Ücret: ")
+        if (isKrediKart) {
+            totalFare *= 1.2;
+        }
+        sb.append("   Toplam Sure: ").append(String.format("%.0f", totalSure)).append(" dk, Ucret: ")
                 .append(String.format("%.2f", totalFare)).append(" TL\n");
         return sb.toString();
     }
 
-    // Undirected Dijkstra algoritması
     private List<Durak> calculateRouteUndirected(Durak start, Durak end, List<Durak> duraklar) {
         Map<String, List<Edge>> graph = new HashMap<>();
         for (Durak d : duraklar) {
@@ -479,7 +465,6 @@ public class Main extends Application {
         return route;
     }
 
-    // En az aktarmalı rota (BFS ile)
     private List<Durak> calculateRouteMinHops(Durak start, Durak end, List<Durak> duraklar) {
         Map<String, List<String>> graph = new HashMap<>();
         for (Durak d : duraklar) {
@@ -524,7 +509,6 @@ public class Main extends Application {
         return route;
     }
 
-    // Direkt kenardaki bilgiyi döndüren metot (reverse kontrolü dahil)
     private Pair<Double, Double> getEdgeInfo(Durak from, Durak to) {
         if (from.getNextStops() != null) {
             for (NextStop ns : from.getNextStops()) {
@@ -549,11 +533,10 @@ public class Main extends Application {
         return new Pair<>(0.0, 0.0);
     }
 
-    // En az aktarmalı rota metodu
     private String computeMinHopsRoute(Durak start, Durak end, List<Durak> duraklar) {
         List<Durak> route = calculateRouteMinHops(start, end, duraklar);
-        if (route == null || route.isEmpty()) return "🔹 En Az Aktarmalı Rota: Uygun rota bulunamadı.\n";
-        StringBuilder sb = new StringBuilder("🔹 En Az Aktarmalı Rota:\n   Rota: ");
+        if (route == null || route.isEmpty()) return "🔹 En Az Aktarmali Rota: Uygun rota bulunamadi.\n";
+        StringBuilder sb = new StringBuilder("🔹 En Az Aktarmali Rota:\n   Rota: ");
         for (Durak d : route) {
             sb.append(d.getName()).append(" -> ");
         }
@@ -562,37 +545,40 @@ public class Main extends Application {
         return sb.toString();
     }
 
-    // Sadece Taksi rotası hesaplama
-    private String computeDirectTaxiRoute(Konum start, Konum destination) {
+    private String computeDirectTaxiRoute(Konum start, Konum destination, boolean isKrediKart) {
         double distance = start.mesafeHesapla(destination);
         Taksi taxi = cityData.getTaxi();
         double fare = taxi.hesaplaUcret(distance);
-        double time = distance * 2; // varsayım: 2 dk/km
-        return "🔹 Sadece Taksi:\n   Mesafe: " + String.format("%.2f", distance) + " km\n   Süre: " +
-                String.format("%.0f", time) + " dk\n   Ücret: " + String.format("%.2f", fare) + " TL\n";
+        double time = distance * 2;
+        if (isKrediKart) {
+            fare *= 1.2;
+        }
+        return "🔹 Sadece Taksi:\n   Mesafe: " + String.format("%.2f", distance) + " km\n   Sure: " +
+                String.format("%.0f", time) + " dk\n   Ucret: " + String.format("%.2f", fare) + " TL\n";
     }
 
-    // Sadece Otobüs rotası hesaplama (otobüs + otobüs)
-    private String computeBusOnlyRoute(Durak start, Durak end, List<Durak> duraklar) {
+    private String computeBusOnlyRoute(Durak start, Durak end, List<Durak> duraklar, boolean isKrediKart) {
         List<Durak> route = calculateRouteUndirected(start, end, duraklar);
-        if (route == null || route.isEmpty()) return "🔹 Sadece Otobüs: Uygun rota bulunamadı.\n";
+        if (route == null || route.isEmpty()) return "🔹 Sadece Otobus: Uygun rota bulunamadi.\n";
         double totalSure = 0;
         double totalFare = 0;
-        StringBuilder sb = new StringBuilder("🔹 Sadece Otobüs:\n");
+        StringBuilder sb = new StringBuilder("🔹 Sadece Otobus:\n");
         for (int i = 0; i < route.size() - 1; i++) {
             Durak current = route.get(i);
             Durak next = route.get(i + 1);
             Pair<Double, Double> info = getEdgeInfo(current, next);
             totalSure += info.getKey();
             totalFare += info.getValue();
-            sb.append("   ").append(current.getName()).append(" -> ").append(next.getName()).append(" (Otobüs)\n");
+            sb.append("   ").append(current.getName()).append(" -> ").append(next.getName()).append(" (Otobus)\n");
         }
-        sb.append("   Toplam Süre: ").append(String.format("%.0f", totalSure))
-                .append(" dk, Ücret: ").append(String.format("%.2f", totalFare)).append(" TL\n");
+        if (isKrediKart) {
+            totalFare *= 1.2;
+        }
+        sb.append("   Toplam Sure: ").append(String.format("%.0f", totalSure))
+                .append(" dk, Ucret: ").append(String.format("%.2f", totalFare)).append(" TL\n");
         return sb.toString();
     }
 
-    // Yardımcı metot: Durak'ı id'ye göre bulur.
     private Durak getDurakById(List<Durak> duraklar, String id) {
         for (Durak d : duraklar) {
             if (d.getId().equals(id)) return d;
@@ -600,7 +586,6 @@ public class Main extends Application {
         return null;
     }
 
-    // Kullanıcının konumuna en yakın durağı bulur
     private Durak findNearestDurak(Konum pos, List<Durak> duraklar) {
         Durak nearest = null;
         double minDist = Double.MAX_VALUE;
@@ -614,13 +599,12 @@ public class Main extends Application {
         return nearest;
     }
 
-    // JSON veriseti yüklemesi
     private void loadCityData() {
         try {
             ObjectMapper mapper = new ObjectMapper();
             InputStream is = getClass().getResourceAsStream("/veriseti.json");
             if (is == null) {
-                System.err.println("veriseti.json dosyası bulunamadı!");
+                System.err.println("veriseti.json dosyasi bulunamadi!");
                 return;
             }
             cityData = mapper.readValue(is, CityData.class);

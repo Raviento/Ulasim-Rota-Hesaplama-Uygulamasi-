@@ -3,7 +3,6 @@ package com.example.prolab4;
 class KentKart extends Odeme {
     private double bakiye;
 
-    // Başlangıç bakiyesi 10 TL
     public KentKart(double bakiye) {
         this.bakiye = bakiye;
     }

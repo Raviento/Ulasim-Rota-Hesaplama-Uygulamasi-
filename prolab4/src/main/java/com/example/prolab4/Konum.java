@@ -16,10 +16,9 @@ class Konum {
     public double getBoylam() {
         return boylam;
     }
-    
-    // Haversine formülü kullanılarak iki konum arasındaki mesafeyi (km cinsinden) hesaplar
+
     public double mesafeHesapla(Konum diger) {
-        double R = 6371; // Dünya yarıçapı (km)
+        double R = 6371;
         double dLat = Math.toRadians(diger.enlem - this.enlem);
         double dLon = Math.toRadians(diger.boylam - this.boylam);
         double a = Math.sin(dLat/2) * Math.sin(dLat/2) +

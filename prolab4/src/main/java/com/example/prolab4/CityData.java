@@ -2,17 +2,15 @@ package com.example.prolab4;
 
 import java.util.List;
 
-// JSON'dan üst seviye verileri tutacak
 public class CityData {
-    private String city;            // "city": "Izmit"
-    private Taksi taxi;              // "taxi": { ... }
-    private List<Durak> duraklar;   // "duraklar": [...]
+    private String city;
+    private Taksi taxi;
+    private List<Durak> duraklar;
 
-    // Jackson için boş constructor
+
     public CityData() {
     }
 
-    // Getter & Setter
     public String getCity() {
         return city;
     }

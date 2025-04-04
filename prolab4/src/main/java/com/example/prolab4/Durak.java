@@ -5,14 +5,13 @@ import java.util.List;
 public class Durak {
     private String id;
     private String name;
-    private String type; // "bus" veya "tram"
-    private double lat;  // <-- JSON "lat" den gelecek
-    private double lon;  // <-- JSON "lon" den gelecek
+    private String type;
+    private double lat;
+    private double lon;
     private boolean sonDurak;
     private List<NextStop> nextStops;
     private Transfer transfer;
 
-    // Jackson'ın ihtiyaç duyduğu no-arg constructor
     public Durak() {
     }
 
@@ -41,7 +40,6 @@ public class Durak {
     public Transfer getTransfer() { return transfer; }
     public void setTransfer(Transfer transfer) { this.transfer = transfer; }
 
-    // Haversine için ister konum objesi oluşturup return edebilirsiniz.
     public Konum getKonum() {
         return new Konum(lat, lon);
     }

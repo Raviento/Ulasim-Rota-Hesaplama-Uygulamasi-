@@ -7,7 +7,6 @@ class Otobus extends Arac {
     
     @Override
     public double hesaplaUcret(double mesafe) {
-        // Örnek ücret hesaplaması; veri setine göre sabit ücretler veya mesafeye bağlı ücretler uygulanabilir.
         return mesafe * 1.0; // placeholder
     }
 }

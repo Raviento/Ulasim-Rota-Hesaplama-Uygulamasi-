@@ -7,7 +7,6 @@ public class Taksi extends Arac {
     private double openingFee;
     private double costPerKm;
 
-    // No-arg constructor (Jackson için)
     public Taksi() {
         super(new Konum(0, 0));
     }
@@ -15,7 +14,7 @@ public class Taksi extends Arac {
     @JsonCreator
     public Taksi(@JsonProperty("openingFee") double openingFee,
                  @JsonProperty("costPerKm") double costPerKm) {
-        // Arac artık sadece Konum parametresi alıyor.
+
         super(new Konum(0, 0));
         this.openingFee = openingFee;
         this.costPerKm = costPerKm;
